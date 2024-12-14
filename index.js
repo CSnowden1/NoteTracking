@@ -61,14 +61,15 @@ async function updateTracking(trackingNumber, fulfillmentId) {
     // Replace the carrier and tracking number with your desired values
 
     const body = {
-      fulfillment: {
-        notify_customer: true,
-        tracking_info: {
-          company: 'DHL Express', // Replace with the actual carrier if needed
-          number: '12345678',
+      "fulfillment": {
+        "notify_customer": true,
+        "tracking_info": {
+          "company": 'DHL Express', // Replace with the actual carrier if needed
+          "number": '12345678',
         },
       },
     };
+
 
     const response = await axios.post(updateTrackingUrl, body, {
       headers: {
