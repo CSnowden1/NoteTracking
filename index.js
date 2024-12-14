@@ -52,7 +52,7 @@ async function updateTracking(orderId, trackingNumber) {
             fulfillmentData,
             {
                 headers: {
-                    "X-Shopify-Access-Token": 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,
+                    "X-Shopify-Access-Token": ,
                 },
             }
         );
