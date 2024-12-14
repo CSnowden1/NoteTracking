@@ -1,103 +1,97 @@
-import dotenv from 'dotenv';
-dotenv.config();
-import express from 'express';
-import bodyParser from 'body-parser';
-import '@shopify/shopify-api/adapters/node';
-import { shopifyApi } from '@shopify/shopify-api';
-
+require('dotenv').config();
+const express = require('express');
+const bodyParser = require('body-parser');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Shopify credentials
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL;  // Your shop's base URL
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN;  // The OAuth access token
+const SHOP_DOMAIN = process.env.SHOP_DOMAIN;  // Your shop's domain
+
 // Middleware to parse JSON
 app.use(bodyParser.json());
 
-// Shopify credentials
-const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const API_KEY = process.env.API_KEY;
-const API_KEY_SECRET = process.env.API_KEY_SECRET;
-
-// Initialize Shopify API client
-const shopify = shopifyApi({
-    apiKey: API_KEY,
-    apiSecretKey: API_KEY_SECRET,
-    scopes: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
-    hostName: SHOP_DOMAIN,
-});
-
-// Parse tracking number from notes
+// Function to extract tracking number from notes
 function extractTrackingNumber(note) {
-    const match = note.match(/Tracking Number:\s*(\d+)/i);
-    return match ? match[1] : null;
+  const match = note.match(/Tracking Number:\s*(\d+)/i);
+  return match ? match[1] : null;
 }
 
-// Update tracking for an order using Shopify Node API
-async function updateTracking(orderId, trackingNumber, fulfillmentId) {
-    if (!orderId || !trackingNumber || !fulfillmentId) {
-        console.error('Invalid order ID, tracking number, or fulfillment ID');
-        return;
-    }
-
-    try {
-        console.log(`Updating tracking for order ${orderId} with number ${trackingNumber}`);
-
-        // API request to update tracking
-        const client = new shopify.clients.Rest({  
-            domain: SHOP_DOMAIN,
-            accessToken: ACCESS_TOKEN,
-        });
-
-        const response = await client.put({
-            path: `fulfillments/${fulfillmentId}`,
-            data: {
-                fulfillment: {
-                    tracking_info: {
-                        number: trackingNumber,
-                        company: 'DHL Express',
-                    },
-                    notify_customer: true,
-                },
-            },
-            type: 'application/json',
-        });
-
-        console.log(`Tracking updated successfully:`, response.body);
-    } catch (error) {
-        console.error(`Failed to update tracking for order ${orderId}:`, error.response.errors);
-    }
-}
-
-// Webhook endpoint
+// Webhook endpoint to trigger the tracking update
 app.post('/webhook', async (req, res) => {
-    const order = req.body;
+  const order = req.body;
 
-    if (!order || !order.note) {
-        console.log('No valid order or note received in webhook.');
-        return res.status(400).send('Invalid webhook payload');
-    }
-
-    console.log('Received webhook:', order);
-
+  if (order && order.note) {
     const trackingNumber = extractTrackingNumber(order.note);
     if (trackingNumber) {
-        console.log('Tracking number extracted:', trackingNumber);
-        const fulfillment = new shopify.rest.Fulfillment({session: session});
-        console.log(order.fulfillments[0].id);
-        fulfillment.id = order.fulfillments[0].id;
-        console.log('Fulfillment extracted:', fulfillment)
-        await fulfillment.update_tracking({
-            body: {"fulfillment": {"notify_customer": true, "tracking_info": {"company": "UPS", "number": `${trackingNumber}`}}},
-            });
-        console.log('Tracking updated for order:', order.id);
+      try {
+        await updateTracking(order.id, trackingNumber);
+        console.log(`Tracking updated for order ${order.id}`);
+      } catch (error) {
+        console.error(`Failed to update tracking for order ${order.id}:`, error.message);
+      }
     } else {
-        console.log('No tracking number found in the order note.');
+      console.log(`No tracking number found in note for order ${order.id}`);
+    }
+  } else {
+    console.log(`Invalid order data received`);
+  }
+
+  res.status(200).send('Webhook processed');
+});
+
+// Function to fetch fulfillment ID and update the tracking number in Shopify
+async function updateTracking(orderId, trackingNumber) {
+  try {
+    // Fetch fulfillments for the given order
+    const fulfillmentsUrl = `${SHOPIFY_API_URL}/admin/api/2024-10/orders/${orderId}/fulfillments.json`;
+
+    const fulfillmentsResponse = await axios.get(fulfillmentsUrl, {
+      headers: {
+        'X-Shopify-Access-Token': ACCESS_TOKEN,
+      },
+    });
+
+    const fulfillment = fulfillmentsResponse.data.fulfillments[0]; // Use the first fulfillment
+    if (!fulfillment) {
+      throw new Error('No fulfillments found for this order');
     }
 
-    res.status(200).send('Webhook processed');
-});
+    const fulfillmentId = fulfillment.id; // Get the ID of the fulfillment
+  
+    // Update tracking
+    const updateTrackingUrl = `${SHOPIFY_API_URL}/admin/api/2024-10/fulfillments/${fulfillmentId}/update_tracking.json`;
+
+    console.log(`Updating tracking for fulfillment ID ${fulfillmentId}`);
+
+    const body = {
+      fulfillment: {
+        notify_customer: true,
+        tracking_info: {
+          company: 'UPS', // Replace with the actual carrier if needed
+          number: trackingNumber,
+        },
+      },
+    };
+
+    const response = await axios.post(updateTrackingUrl, body, {
+      headers: {
+        'X-Shopify-Access-Token': ACCESS_TOKEN,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(`Error updating tracking: ${error.message}`);
+  }
+}
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
