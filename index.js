@@ -23,6 +23,7 @@ const shopify = shopifyApi({
     apiSecretKey: API_KEY_SECRET,
     scopes: ['write_fulfillments', 'read_fulfillments'],
     hostName: SHOP_DOMAIN,
+    accessToken: ACCESS_TOKEN
 });
 
 // Parse tracking number from order notes
@@ -49,12 +50,14 @@ app.post('/webhook', async (req, res) => {
     console.log(fulfillmentId);
     // Continue with tracking update only if a tracking number is found and a fulfillment ID is provided
     if (trackingNumber && fulfillmentId) {
+        console.log('Building Shopify client for order');
         const client = new shopify.clients.Rest({
             domain: SHOP_DOMAIN,
             accessToken: ACCESS_TOKEN,
         });
 
         try {
+            console.log('Trying tracking for order:');
             // Update tracking for the specified fulfillment ID
             await client.put({
                 path: `fulfillments/${fulfillmentId}`,
