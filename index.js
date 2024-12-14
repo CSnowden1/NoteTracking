@@ -21,7 +21,7 @@ const API_KEY_SECRET = process.env.API_KEY_SECRET;
 const shopify = shopifyApi({
     apiKey: API_KEY,
     apiSecretKey: API_KEY_SECRET,
-    scopes: ['write_fulfillments', 'read_fulfillments'],
+    scopes: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
     hostName: SHOP_DOMAIN,
 });
 
