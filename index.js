@@ -10,17 +10,16 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com/admin/api/2024-01
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
+const SHOP_DOMAIN = process.env.SHOP_DOMAIN; // Your Shopify store domain
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // Your Shopify Access Token
 
 // Parse tracking number from notes
 function extractTrackingNumber(note) {
-    const match = note.match(/Tracking Number:\s*(\d+)/i); // Updated regex for "Tracking Number: 123456"
+    const match = note.match(/Tracking Number:\s*(\d+)/i); // Regex for "Tracking Number: 123456"
     return match ? match[1] : null;
 }
 
-// Update tracking for an order using curl
+// Update tracking for an order using live curl
 async function updateTracking(orderId, trackingNumber, fulfillmentId) {
     if (!orderId || !trackingNumber) {
         console.error('Invalid order ID or tracking number');
@@ -30,29 +29,28 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
     try {
         console.log(`Attempting to update tracking for order ${orderId} with tracking number ${trackingNumber}`);
 
-        // Build the curl command for updating fulfillment
-
-        const curlCommand = `curl -X POST https://${SHOP_DOMAIN}/admin/api/2024-10/fulfillments/${fulfillmentId}/update_tracking.json \
-            -H "Content-Type: application/json" \
+        // Execute the curl command live
+        exec(
+            `
+            curl -d '{"fulfillment":{"notify_customer":true,"tracking_info":{"company":"DHL Express","number":"${trackingNumber}"}}}' \
+            -X POST "https://${SHOP_DOMAIN}/admin/api/2024-10/fulfillments/${fulfillmentId}/update_tracking.json" \
             -H "X-Shopify-Access-Token: ${ACCESS_TOKEN}" \
-            -d '{"fulfillment":{"tracking_info":{"number":"${trackingNumber}"},"notify_customer":true}}'`;
-
-        // Execute the curl command
-        exec(curlCommand, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Didn't Work`);
-                console.error(`Error executing curl command: ${error.message}`);
-                return;
+            -H "Content-Type: application/json"
+            `,
+            (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`Error executing curl command: ${error.message}`);
+                    return;
+                }
+                if (stderr) {
+                    console.error(`stderr: ${stderr}`);
+                    return;
+                }
+                console.log(`Tracking updated for order ${orderId}:`, stdout);
             }
-            if (stderr) {
-                console.error(`Didn't Work`);
-                console.error(`stderr: ${stderr}`);
-                return;
-            }
-            console.log(`Tracking updated for order ${orderId}:`, stdout);
-        });
+        );
     } catch (error) {
-        console.error(`Failed to update tracking for order ${orderId}:`, error?.message);
+        console.error(`Failed to update tracking for order ${orderId}:`, error.message);
     }
 }
 
