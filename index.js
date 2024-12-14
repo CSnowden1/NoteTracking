@@ -6,64 +6,75 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL;  // Your shop's base URL, e.g., 'your-shop.myshopify.com'
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;  // The OAuth access token
-const SHOP_DOMAIN = process.env.SHOP_DOMAIN;  // The shop's domain, e.g., 'your-shop.myshopify.com'
-
 // Middleware to parse JSON
 app.use(bodyParser.json());
 
-// Function to extract tracking number from notes
+// Shopify credentials
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com/admin/api/2023-10
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+
+// Parse tracking number from notes
 function extractTrackingNumber(note) {
-  const match = note.match(/Tracking Number:\s*(\d+)/i);
-  return match ? match[1] : null;
+    const match = note.match(/Tracking Number:\s*(\d+)/i); // Updated regex for "Tracking Number: 123456"
+    return match ? match[1] : null;
 }
 
-// Webhook endpoint to trigger the tracking update
-app.post('/webhook', async (req, res) => {
-  const order = req.body;
+// Update tracking for an order
+async function updateTracking(orderId, trackingNumber, fulfillmentId) {
+    if (!orderId || !trackingNumber) {
+        console.error('Invalid order ID or tracking number');
+        return;
+    }
 
-  if (order && order.note) {
+    try {
+        const fulfillmentData = {
+            fulfillment: {
+                tracking_info: {
+                    number: trackingNumber,
+                },
+                notify_customer: true, // Notify customer about tracking update
+            },
+        };
+
+        const response = await axios.post(
+            `https://${SHOP_DOMAIN}/admin/api/2024-01/orders/${orderId}/fulfillments/${fulfillmentId}.json`,
+            fulfillmentData,
+            {
+                headers: {
+                    "X-Shopify-Access-Token": ACCESS_TOKEN,
+                },
+            }
+        );
+
+        console.log(`Tracking updated for order ${orderId}:`, response.data);
+    } catch (error) {
+        console.error(`Failed to update tracking for order ${orderId}:`, error?.response?.data || error.message);
+    }
+}
+
+// Webhook endpoint
+app.post('/webhook', async (req, res) => {
+    const order = req.body;
+
+    if (!order || !order.note) {
+        console.log('No valid order or note received in webhook.');
+        return res.status(400).send('Invalid webhook payload');
+    }
+
+    console.log('Received webhook:', order);
+
     const trackingNumber = extractTrackingNumber(order.note);
     if (trackingNumber) {
-      await updateTracking(order.id, trackingNumber);
+        console.log('Tracking number extracted:', trackingNumber);
+        await updateTracking(order.id, trackingNumber, order.fulfillments[0].id);
+    } else {
+        console.log('No tracking number found in the order note.');
     }
-  }
 
-  res.status(200).send('Webhook processed');
+    res.status(200).send('Webhook processed');
 });
-
-// Function to update the tracking number in Shopify
-async function updateTracking(orderId, trackingNumber) {
-  try {
-    const fulfillmentId = 1234567890; // Replace with actual fulfillment ID (you might need to query for it)
-    const url = `https://${SHOP_DOMAIN}/admin/api/2024-01/orders/${orderId}/fulfillments/${fulfillmentId}.json`;
-
-    const body = {
-      fulfillment: {
-        notify_customer: true,
-        tracking_info: {
-          company: 'UPS',
-          number: trackingNumber,
-        },
-      },
-    };
-
-    const response = await axios.put(url, body, {
-      headers: {
-        'X-Shopify-Access-Token': ACCESS_TOKEN,  // Authentication with access token
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log(`Tracking updated for order ${orderId}`);
-  } catch (error) {
-    console.error(`Error updating tracking for order ${orderId}:`, error);
-  }
-}
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
