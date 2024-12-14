@@ -40,10 +40,12 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
         // Execute the curl command
         exec(curlCommand, (error, stdout, stderr) => {
             if (error) {
+                console.error(`Didn't Work`);
                 console.error(`Error executing curl command: ${error.message}`);
                 return;
             }
             if (stderr) {
+                console.error(`Didn't Work`);
                 console.error(`stderr: ${stderr}`);
                 return;
             }
