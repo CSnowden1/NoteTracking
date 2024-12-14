@@ -27,6 +27,8 @@ const shopify = shopifyApi({
 
 // Parse tracking number from order notes
 function extractTrackingNumber(note) {
+    // Example note format: "Tracking Number: 1234567890"
+   console.log('Updating tracking number');
     const match = note.match(/Tracking Number:\s*(\d+)/i);
     return match ? match[1] : null;
 }
@@ -34,6 +36,11 @@ function extractTrackingNumber(note) {
 // Webhook endpoint
 app.post('/webhook', async (req, res) => {
     const order = req.body;
+
+    console.log('Received webhook:', order);
+    console.log(order.note);
+
+    // Continue with tracking update only if a note is provided
 
 
     const trackingNumber = extractTrackingNumber(order.note); // Extract tracking number from notes
