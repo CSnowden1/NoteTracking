@@ -28,7 +28,7 @@ app.post('/webhook', async (req, res) => {
     const trackingNumber = extractTrackingNumber(order.note);
     if (trackingNumber) {
       try {
-        await updateTracking(order.id, trackingNumber);
+        await updateTracking(order.id, trackingNumber, order.fulfillments[0].id);
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
         console.error(`Failed to update tracking for order ${order.id}:`, error.message);
@@ -44,24 +44,10 @@ app.post('/webhook', async (req, res) => {
 });
 
 // Function to fetch fulfillment ID and update the tracking number in Shopify
-async function updateTracking(orderId, trackingNumber) {
+async function updateTracking(orderId, trackingNumber, fulfillmentId) {
   try {
-    // Fetch fulfillments for the given order
-    const fulfillmentsUrl = `${SHOPIFY_API_URL}/admin/api/2024-10/orders/${orderId}/fulfillments.json`;
-
-    const fulfillmentsResponse = await axios.get(fulfillmentsUrl, {
-      headers: {
-        'X-Shopify-Access-Token': ACCESS_TOKEN,
-      },
-    });
-
-    const fulfillment = fulfillmentsResponse.data.fulfillments[0]; // Use the first fulfillment
-    if (!fulfillment) {
-      throw new Error('No fulfillments found for this order');
-    }
-
-    const fulfillmentId = fulfillment.id; // Get the ID of the fulfillment
-  
+ 
+  console.log(`Fulfillment ID: ${fulfillmentId}`);
     // Update tracking
     const updateTrackingUrl = `${SHOPIFY_API_URL}/admin/api/2024-10/fulfillments/${fulfillmentId}/update_tracking.json`;
 
