@@ -3,8 +3,7 @@ dotenv.config();
 import express from 'express';
 import bodyParser from 'body-parser';
 import '@shopify/shopify-api/adapters/node';
-import { shopifyApi, Session, restResources } from '@shopify/shopify-api';
-
+import { shopifyApi } from '@shopify/shopify-api';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,19 +21,17 @@ const API_KEY_SECRET = process.env.API_KEY_SECRET;
 const shopify = shopifyApi({
     apiKey: API_KEY,
     apiSecretKey: API_KEY_SECRET,
-    scopes: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
+    scopes: ['write_fulfillments', 'read_fulfillments'],
     hostName: SHOP_DOMAIN,
-    restResources
 });
 
-
-// Parse tracking number from notes
+// Parse tracking number from order notes
 function extractTrackingNumber(note) {
     const match = note.match(/Tracking Number:\s*(\d+)/i);
     return match ? match[1] : null;
 }
 
-
+// Webhook endpoint
 app.post('/webhook', async (req, res) => {
     const order = req.body;
 
@@ -43,22 +40,20 @@ app.post('/webhook', async (req, res) => {
         return res.status(400).send('Invalid webhook payload');
     }
 
-    const trackingNumber = extractTrackingNumber(order.note); // Assuming extractTrackingNumber function exists
-    const fulfillmentId = order.fulfillments[0].id;
+    const trackingNumber = extractTrackingNumber(order.note); // Extract tracking number from notes
+    const fulfillmentId = order.fulfillments[0]?.id; // Use the first fulfillment ID
 
     if (trackingNumber && fulfillmentId) {
-        const session = new Session({
-            shop: SHOP_DOMAIN,
+        const client = new shopify.clients.Rest({
+            domain: SHOP_DOMAIN,
             accessToken: ACCESS_TOKEN,
-            isOnline: false,
         });
 
-        const fulfillment = new shopify.rest.Fulfillment({ session });
-        fulfillment.id = fulfillmentId;
-
         try {
-            await fulfillment.update_tracking({
-                body: {
+            // Update tracking for the specified fulfillment ID
+            await client.put({
+                path: `fulfillments/${fulfillmentId}`,
+                data: {
                     fulfillment: {
                         notify_customer: true,
                         tracking_info: {
@@ -67,8 +62,10 @@ app.post('/webhook', async (req, res) => {
                         },
                     },
                 },
+                type: 'application/json',
             });
-            console.log('Tracking updated for order:', order.id);
+
+            console.log('Tracking updated successfully for order:', order.id);
         } catch (error) {
             console.error('Error updating tracking:', error);
         }
