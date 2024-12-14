@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const axios = require('axios');
+const { Shopify } = require('@shopify/shopify-api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,66 +10,61 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com/admin/api/2023-10
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+const SHOP_DOMAIN = process.env.SHOP_DOMAIN; // your-store.myshopify.com
+
+// Set up Shopify API client
+Shopify.Context.initialize({
+  API_KEY: process.env.SHOPIFY_API_KEY,
+  API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
+  SCOPES: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
+  HOST_NAME: SHOPIFY_API_URL,
+  API_VERSION: '2023-10', // Choose API version according to your setup
+  IS_EMBEDDED_APP: false,
+  ACCESS_TOKEN: ACCESS_TOKEN,
+});
 
 // Parse tracking number from notes
 function extractTrackingNumber(note) {
-    const match = note.match(/Tracking Number:\s*(\d+)/i); // Updated regex for "Tracking Number: 123456"
+    const match = note.match(/Tracking Number:\s*(\d+)/i); // Adjust regex as needed
     return match ? match[1] : null;
 }
 
-// Update tracking for an order
+// Update tracking using Shopify API
 async function updateTracking(orderId, trackingNumber) {
-    if (!orderId || !trackingNumber) {
-        console.error('Invalid order ID or tracking number');
-        return;
-    }
-
     try {
-        const fulfillmentData = {
-            fulfillment: {
-                tracking_info: {
-                    number: trackingNumber,
-                    company: "Generic Carrier", // Replace with actual carrier name if available
+        const session = await Shopify.Utils.loadOfflineSession(SHOP_DOMAIN); // This loads the session for your store
+        const fulfillment = new Shopify.rest.Fulfillment({ session });
+        fulfillment.id = orderId;  // Specify the order fulfillment ID
+
+        // Use update_tracking method as specified in the SDK
+        await fulfillment.update_tracking({
+            body: {
+                fulfillment: {
+                    notify_customer: true,
+                    tracking_info: {
+                        number: trackingNumber,
+                    },
                 },
-                notify_customer: true, // Notify customer about tracking update
             },
-        };
+        });
 
-        const response = await axios.post(
-            `${SHOPIFY_API_URL}/orders/${orderId}/fulfillments.json`,
-            fulfillmentData,
-            {
-                headers: {
-                    "X-Shopify-Access-Token": ACCESS_TOKEN,
-                },
-            }
-        );
-
-        console.log(`Tracking updated for order ${orderId}:`, response.data);
+        console.log(`Tracking updated for order ${orderId}`);
     } catch (error) {
-        console.error(`Failed to update tracking for order ${orderId}:`, error?.response?.data || error.message);
+        console.error(`Error updating tracking for order ${orderId}:`, error);
     }
 }
 
-// Webhook endpoint
+// Webhook endpoint to trigger the tracking update
 app.post('/webhook', async (req, res) => {
     const order = req.body;
 
-    if (!order || !order.note) {
-        console.log('No valid order or note received in webhook.');
-        return res.status(400).send('Invalid webhook payload');
-    }
-
-    console.log('Received webhook:', order);
-
-    const trackingNumber = extractTrackingNumber(order.note);
-    if (trackingNumber) {
-        console.log('Tracking number extracted:', trackingNumber);
-        await updateTracking(order.id, trackingNumber);
-    } else {
-        console.log('No tracking number found in the order note.');
+    if (order && order.note) {
+        const trackingNumber = extractTrackingNumber(order.note);
+        if (trackingNumber) {
+            await updateTracking(order.id, trackingNumber);
+        }
     }
 
     res.status(200).send('Webhook processed');
