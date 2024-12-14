@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const crypto = require('crypto');
 const axios = require('axios');
 
 const app = express();
@@ -13,20 +12,6 @@ app.use(bodyParser.json());
 // Shopify credentials
 const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com/admin/api/2023-10
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const SHOPIFY_WEBHOOK_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
-
-// Verify Shopify webhook
-function verifyWebhook(req, res, next) {  
-    const hmac = req.headers['x-shopify-hmac-sha256'];
-    const body = JSON.stringify(req.body);
-    const hash = crypto.createHmac('sha256', SHOPIFY_WEBHOOK_SECRET).update(body, 'utf8').digest('base64');
-
-    if (hash === hmac) {
-        next();
-    } else {
-        res.status(403).send('Unauthorized');
-    }
-}
 
 // Parse tracking number from notes
 function extractTrackingNumber(note) {
@@ -41,7 +26,6 @@ async function updateTracking(orderId, trackingNumber) {
             fulfillment: {
                 tracking_info: {
                     number: trackingNumber,
-                    company: "Carrier Name", // Replace with carrier name if available
                 },
                 notify_customer: true, // Optional: Notify customer about tracking update
             },
@@ -64,9 +48,10 @@ async function updateTracking(orderId, trackingNumber) {
 }
 
 // Webhook endpoint
-app.post('/webhook', verifyWebhook, async (req, res) => {
+app.post('/webhook', async (req, res) => {
     const order = req.body;
     console.log('Received webhook:', order);
+
     if (order.note) {
         const trackingNumber = extractTrackingNumber(order.note);
         if (trackingNumber) {
