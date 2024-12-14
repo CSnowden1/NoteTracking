@@ -59,7 +59,7 @@ app.post('/webhook', async (req, res) => {
         }
     }
 
-    res.status(200).send('Webhook processed');
+    res.status(200).send('Webhook processed');  
 });
 
 // Start the server
