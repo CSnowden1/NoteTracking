@@ -15,7 +15,7 @@ const API_KEY = process.env.API_KEY;
 // Initialize Shopify context
 const shopify = shopifyApi({
   apiKey: API_KEY,
-  apiSecretKey: 'APISecretFromPartnersDashboard',
+  apiSecretKey: API_KEY_SECRET,
   scopes: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
   hostName: 'https://trackingnote-2a56446133b8.herokuapp.com/',  // or your domain name
   apiVersion: LATEST_API_VERSION,   // use latest API version
