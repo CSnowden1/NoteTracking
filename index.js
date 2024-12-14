@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const { shopify } = require('@shopify/shopify-api'); // Correct import
+const Shopify = require('@shopify/shopify-api'); // Correct import
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,10 +12,10 @@ const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
 
 // Initialize Shopify context
-shopify.Context.initialize({
+Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
   API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
-  SCOPES: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
+  SCOPES: ['write_customers', 'read_customers', 'write_fulfillments', 'read_fulfillments', 'write_order_edits', 'read_order_edits', 'read_orders', 'write_orders'],
   HOST_NAME: SHOPIFY_API_URL,
   API_VERSION: '2023-10', 
   IS_EMBEDDED_APP: false,
@@ -48,8 +48,8 @@ app.post('/webhook', async (req, res) => {
 // Function to update the tracking number in Shopify
 async function updateTracking(orderId, trackingNumber) {
   try {
-    const session = await shopify.Utils.loadOfflineSession(SHOP_DOMAIN);
-    const fulfillment = new shopify.rest.Fulfillment({ session });
+    const session = await Shopify.Utils.loadOfflineSession(SHOP_DOMAIN);
+    const fulfillment = new Shopify.rest.Fulfillment({ session });
     fulfillment.id = orderId;
 
     await fulfillment.update_tracking({
