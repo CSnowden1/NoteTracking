@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const Shopify = require('@shopify/shopify-api'); // Correct import
+const { Shopify } = require('@shopify/shopify-api'); // Correct destructuring
 
 const app = express();
 const PORT = process.env.PORT || 3000;
