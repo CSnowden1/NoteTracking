@@ -46,7 +46,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 // Function to fetch fulfillment ID and update the tracking number in Shopify
-async function updateTracking(orderId, trackingNumber, fulfillmentId) {
+async function updateTracking(trackingNumber, fulfillmentId) {
   try {
  
   console.log(`Fulfillment ID: ${fulfillmentId}`);
@@ -60,7 +60,7 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
         notify_customer: true,
         tracking_info: {
           company: 'DHL Express', // Replace with the actual carrier if needed
-          number: trackingNumber,
+          number: '12345678',
         },
       },
     };
