@@ -66,7 +66,7 @@ async function updateTracking(orderId, trackingNumber) {
 // Webhook endpoint
 app.post('/webhook', verifyWebhook, async (req, res) => {
     const order = req.body;
-
+    console.log('Received webhook:', order);
     if (order.note) {
         const trackingNumber = extractTrackingNumber(order.note);
         if (trackingNumber) {
