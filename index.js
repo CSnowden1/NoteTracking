@@ -21,6 +21,7 @@ function extractTrackingNumber(note) {
 
 
 async function updateTracking(orderId, trackingNumber) {
+    console.log(ACCESS_TOKEN + SHOPIFY_API_URL);
     console.log(`Updating tracking for order ${orderId} with tracking number ${trackingNumber}`);
     if (!orderId ||!trackingNumber) {
         console.error('Invalid order ID or tracking number');
