@@ -32,11 +32,10 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
 
         // Build the curl command for updating fulfillment
 
-
-        const curlCommand = `curl -X PUT "https://${SHOP_DOMAIN}/admin/api/2024-01/orders/${orderId}/fulfillments/${fulfillmentId}.json" \
+        const curlCommand = `curl -X POST https://${SHOP_DOMAIN}/admin/api/2024-10/fulfillments/${fulfillmentId}/update_tracking.json \
             -H "Content-Type: application/json" \
             -H "X-Shopify-Access-Token: ${ACCESS_TOKEN}" \
-            -d '{"fulfillment":{"notify_customer":true,"tracking_info":{"company":"DHL Express","number":"${trackingNumber}"}}}'`;
+            -d '{"fulfillment":{"tracking_info":{"number":"${trackingNumber}"},"notify_customer":true}}'`;
 
         // Execute the curl command
         exec(curlCommand, (error, stdout, stderr) => {
