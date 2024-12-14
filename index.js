@@ -3,7 +3,8 @@ dotenv.config();
 import express from 'express';
 import bodyParser from 'body-parser';
 import '@shopify/shopify-api/adapters/node';
-import { shopifyApi } from '@shopify/shopify-api';
+import { shopifyApi, Session } from '@shopify/shopify-api';
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -81,7 +82,7 @@ app.post('/webhook', async (req, res) => {
     const trackingNumber = extractTrackingNumber(order.note);
     if (trackingNumber) {
         console.log('Tracking number extracted:', trackingNumber);
-        const fulfillment = new shopify.rest.Fulfillment({session: session});
+        const fulfillment = new shopify.rest.Fulfillment({session: Session});
         console.log(order.fulfillments[0].id);
         fulfillment.id = order.fulfillments[0].id;
         console.log('Fulfillment extracted:', fulfillment)
