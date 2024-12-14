@@ -23,9 +23,11 @@ function extractTrackingNumber(note) {
 // Webhook endpoint to trigger the tracking update
 app.post('/webhook', async (req, res) => {
   const order = req.body;
+    console.log('Received webhook:', order);
 
   if (order && order.note) {
     const trackingNumber = extractTrackingNumber(order.note);
+    console.log('Tracking Number:', trackingNumber);
     if (trackingNumber) {
       try {
         await updateTracking(order.id, trackingNumber, order.fulfillments[0].id);
@@ -57,7 +59,7 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
       fulfillment: {
         notify_customer: true,
         tracking_info: {
-          company: 'UPS', // Replace with the actual carrier if needed
+          company: 'DHL Express', // Replace with the actual carrier if needed
           number: trackingNumber,
         },
       },
