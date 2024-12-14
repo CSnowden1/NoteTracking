@@ -35,14 +35,12 @@ function extractTrackingNumber(note) {
 app.post('/webhook', async (req, res) => {
     const order = req.body;
 
-    if (!order || !order.fulfillments || order.fulfillments.length === 0) {
-        console.log('No fulfillments found in webhook payload.');
-        return res.status(400).send('Invalid webhook payload');
-    }
 
     const trackingNumber = extractTrackingNumber(order.note); // Extract tracking number from notes
     const fulfillmentId = order.fulfillments[0]?.id; // Use the first fulfillment ID
-
+    console.log(ACCESS_TOKEN);
+    console.log(fulfillmentId);
+    // Continue with tracking update only if a tracking number is found and a fulfillment ID is provided
     if (trackingNumber && fulfillmentId) {
         const client = new shopify.clients.Rest({
             domain: SHOP_DOMAIN,
