@@ -11,6 +11,7 @@ const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
 const API_KEY = process.env.API_KEY;
+const API_KEY_SECRET = process.env.API_KEY_SECRET;
 
 // Initialize Shopify context
 const shopify = shopifyApi({
