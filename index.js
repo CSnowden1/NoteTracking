@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const axios = require('axios');
+const { exec } = require('child_process'); // To use curl command
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,9 +10,9 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com/admin/api/2023-10
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com/admin/api/2024-01
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const SHOP_DOMAIN = process.env.SHOP_DOMAIN
+const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
 
 // Parse tracking number from notes
 function extractTrackingNumber(note) {
@@ -20,7 +20,7 @@ function extractTrackingNumber(note) {
     return match ? match[1] : null;
 }
 
-// Update tracking for an order
+// Update tracking for an order using curl
 async function updateTracking(orderId, trackingNumber, fulfillmentId) {
     if (!orderId || !trackingNumber) {
         console.error('Invalid order ID or tracking number');
@@ -28,34 +28,37 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
     }
 
     try {
-         console.log(SHOP_DOMAIN);
-        console.log(ACCESS_TOKEN);
-        console.log(fulfillmentId);
-        console.log(`https://${SHOP_DOMAIN}/admin/api/2024-01/orders/${orderId}/fulfillments/${fulfillmentId}.json`);
-        // Update fulfillment status
-        const fulfillmentData = {
+        console.log(`Attempting to update tracking for order ${orderId} with tracking number ${trackingNumber}`);
+
+        // Build the curl command for updating fulfillment
+        const fulfillmentData = JSON.stringify({
             fulfillment: {
                 tracking_info: {
                     number: trackingNumber,
                 },
                 notify_customer: true, // Notify customer about tracking update
             },
-        };
+        });
 
-        const response = await axios.post(
-            `https://${SHOP_DOMAIN}/admin/api/2024-01/orders/${orderId}/fulfillments/${fulfillmentId}.json`,
-            fulfillmentData,
-            {
-                headers: {
-                      'Content-Type': 'application/json',
-                    "X-Shopify-Access-Token": ACCESS_TOKEN,
-                },
+        const curlCommand = `curl -X PUT "https://${SHOP_DOMAIN}/admin/api/2024-01/orders/${orderId}/fulfillments/${fulfillmentId}.json" \
+            -H "Content-Type: application/json" \
+            -H "X-Shopify-Access-Token: ${ACCESS_TOKEN}" \
+            -d '${fulfillmentData}'`;
+
+        // Execute the curl command
+        exec(curlCommand, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error executing curl command: ${error.message}`);
+                return;
             }
-        );
-
-        console.log(`Tracking updated for order ${orderId}:`, response.data);
+            if (stderr) {
+                console.error(`stderr: ${stderr}`);
+                return;
+            }
+            console.log(`Tracking updated for order ${orderId}:`, stdout);
+        });
     } catch (error) {
-        console.error(`Failed to update tracking for order ${orderId}:`, error?.response?.data || error.message);
+        console.error(`Failed to update tracking for order ${orderId}:`, error?.message);
     }
 }
 
