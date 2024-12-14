@@ -26,72 +26,53 @@ const shopify = shopifyApi({
     hostName: SHOP_DOMAIN,
 });
 
+
 // Parse tracking number from notes
 function extractTrackingNumber(note) {
     const match = note.match(/Tracking Number:\s*(\d+)/i);
     return match ? match[1] : null;
 }
 
-// Update tracking for an order using Shopify Node API
-async function updateTracking(orderId, trackingNumber, fulfillmentId) {
-    if (!orderId || !trackingNumber || !fulfillmentId) {
-        console.error('Invalid order ID, tracking number, or fulfillment ID');
-        return;
-    }
 
-    try {
-        console.log(`Updating tracking for order ${orderId} with number ${trackingNumber}`);
-
-        // API request to update tracking
-        const client = new shopify.clients.Rest({
-            domain: SHOP_DOMAIN,
-            accessToken: ACCESS_TOKEN,
-        });
-
-        const response = await client.put({
-            path: `fulfillments/${fulfillmentId}`,
-            data: {
-                fulfillment: {
-                    tracking_info: {
-                        number: trackingNumber,
-                        company: 'DHL Express',
-                    },
-                    notify_customer: true,
-                },
-            },
-            type: 'application/json',
-        });
-
-        console.log(`Tracking updated successfully:`, response.body);
-    } catch (error) {
-        console.error(`Failed to update tracking for order ${orderId}:`, error.response.errors);
-    }
-}
-
-// Webhook endpoint
 app.post('/webhook', async (req, res) => {
     const order = req.body;
 
-    if (!order || !order.note) {
-        console.log('No valid order or note received in webhook.');
+    if (!order || !order.fulfillments || order.fulfillments.length === 0) {
+        console.log('No fulfillments found in webhook payload.');
         return res.status(400).send('Invalid webhook payload');
     }
 
-    console.log('Received webhook:', order);
+    const trackingNumber = extractTrackingNumber(order.note); // Assuming extractTrackingNumber function exists
+    const fulfillmentId = order.fulfillments[0].id;
 
-    const trackingNumber = extractTrackingNumber(order.note);
-    if (trackingNumber) {
-        console.log('Tracking number extracted:', trackingNumber);
-        const fulfillment = new shopify.rest.Fulfillment({session: Session});
-        console.log(order.fulfillments[0].id);
-        fulfillment.id = order.fulfillments[0].id;
-        console.log('Fulfillment extracted:', fulfillment)
-        await fulfillment.update_tracking({
-            body: {"fulfillment": {"notify_customer": true, "tracking_info": {"company": "UPS", "number": `${trackingNumber}`}}},
+    if (trackingNumber && fulfillmentId) {
+        const session = new Session({
+            shop: SHOP_DOMAIN,
+            accessToken: ACCESS_TOKEN,
+            isOnline: false,
+        });
+
+        const fulfillment = new shopify.rest.Fulfillment({ session });
+        fulfillment.id = fulfillmentId;
+
+        try {
+            await fulfillment.update_tracking({
+                body: {
+                    fulfillment: {
+                        notify_customer: true,
+                        tracking_info: {
+                            company: 'UPS',
+                            number: trackingNumber,
+                        },
+                    },
+                },
             });
-        console.log('Tracking updated for order:', order.id);
+            console.log('Tracking updated for order:', order.id);
+        } catch (error) {
+            console.error('Error updating tracking:', error);
+        }
     } else {
-        console.log('No tracking number found in the order note.');
+        console.log('Missing tracking number or fulfillment ID.');
     }
 
     res.status(200).send('Webhook processed');
