@@ -12,6 +12,7 @@ app.use(bodyParser.json());
 // Shopify credentials
 const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com/admin/api/2023-10
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+const SHOP_DOMAIN = process.env.SHOP_DOMAIN
 
 // Parse tracking number from notes
 function extractTrackingNumber(note) {
