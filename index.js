@@ -39,7 +39,7 @@ app.post('/webhook', async (req, res) => {
     const order = req.body;
 
     console.log('Received webhook:', order);
-    console.log(order.note);
+    console.log(order.note);  
 
     // Continue with tracking update only if a note is provided
 
