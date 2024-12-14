@@ -21,7 +21,15 @@ function extractTrackingNumber(note) {
 
 
 async function updateTracking(orderId, trackingNumber) {
+    console.log(`Updating tracking for order ${orderId} with tracking number ${trackingNumber}`);
+    if (!orderId ||!trackingNumber) {
+        console.error('Invalid order ID or tracking number');
+        return;
+    }
     try {
+        console.log('Create Tracking Query');
+        // Get the order detailsconso
+        // Update tracking in Shopify
         const fulfillmentData = {
             fulfillment: {
                 tracking_info: {
@@ -30,7 +38,7 @@ async function updateTracking(orderId, trackingNumber) {
                 notify_customer: true,
             },
         };
-
+        console.log('Sending Tracking Update Request');
         const response = await axios.post(
             `${SHOPIFY_API_URL}/orders/${orderId}/fulfillments.json`,
             fulfillmentData,
