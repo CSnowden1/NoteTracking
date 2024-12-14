@@ -1,28 +1,15 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const { shopifyApi, LATEST_API_VERSION } = require('@shopify/shopify-api');  // Correct import
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL;  
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
-const API_KEY = process.env.API_KEY;
-const API_KEY_SECRET = process.env.API_KEY_SECRET;
-
-// Initialize Shopify context
-const shopify = shopifyApi({
-  apiKey: API_KEY,
-  apiSecretKey: API_KEY_SECRET,
-  scopes: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
-  hostName: SHOPIFY_API_URL,  // Your shop domain or tunneling address
-  apiVersion: LATEST_API_VERSION,  // Use latest API version
-  accessToken: ACCESS_TOKEN,
-  isEmbeddedApp: false,
-});
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL;  // Your shop's base URL, e.g., 'your-shop.myshopify.com'
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN;  // The OAuth access token
+const SHOP_DOMAIN = process.env.SHOP_DOMAIN;  // The shop's domain, e.g., 'your-shop.myshopify.com'
 
 // Middleware to parse JSON
 app.use(bodyParser.json());
@@ -50,19 +37,23 @@ app.post('/webhook', async (req, res) => {
 // Function to update the tracking number in Shopify
 async function updateTracking(orderId, trackingNumber) {
   try {
-    const session = await shopify.Utils.loadOfflineSession(SHOP_DOMAIN);
-    const fulfillment = new shopify.rest.Fulfillment({ session });
-    fulfillment.id = orderId;
+    const fulfillmentId = 1234567890; // Replace with actual fulfillment ID (you might need to query for it)
+    const url = `https://${SHOP_DOMAIN}/admin/api/2024-01/orders/${orderId}/fulfillments/${fulfillmentId}.json`;
 
-    await fulfillment.updateTracking({
-      body: {
-        fulfillment: {
-          notify_customer: true,
-          tracking_info: {
-            company: 'UPS',
-            number: trackingNumber,
-          },
+    const body = {
+      fulfillment: {
+        notify_customer: true,
+        tracking_info: {
+          company: 'UPS',
+          number: trackingNumber,
         },
+      },
+    };
+
+    const response = await axios.put(url, body, {
+      headers: {
+        'X-Shopify-Access-Token': ACCESS_TOKEN,  // Authentication with access token
+        'Content-Type': 'application/json',
       },
     });
 
