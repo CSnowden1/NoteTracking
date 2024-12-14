@@ -82,9 +82,13 @@ app.post('/webhook', async (req, res) => {
     if (trackingNumber) {
         console.log('Tracking number extracted:', trackingNumber);
         const fulfillment = new shopify.rest.Fulfillment({session: session});
+        console.log(order.fulfillments[0].id);
+        fulfillment.id = order.fulfillments[0].id;
+        console.log('Fulfillment extracted:', fulfillment)
         await fulfillment.update_tracking({
             body: {"fulfillment": {"notify_customer": true, "tracking_info": {"company": "UPS", "number": `${trackingNumber}`}}},
             });
+        console.log('Tracking updated for order:', order.id);
     } else {
         console.log('No tracking number found in the order note.');
     }
