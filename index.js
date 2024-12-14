@@ -1,26 +1,28 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const { Shopify } = require('@shopify/shopify-api'); // Correct destructuring
+const { shopifyApi, LATEST_API_VERSION } = require('@shopify/shopify-api'); // Correct destructuring
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL;
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL;  
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
+const API_KEY = process.env.API_KEY;
 
 // Initialize Shopify context
-Shopify.Context.initialize({
-  API_KEY: process.env.SHOPIFY_API_KEY,
-  API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
-  SCOPES: ['write_customers', 'read_customers', 'write_fulfillments', 'read_fulfillments', 'write_order_edits', 'read_order_edits', 'read_orders', 'write_orders'],
-  HOST_NAME: SHOPIFY_API_URL,
-  API_VERSION: '2023-10', 
-  IS_EMBEDDED_APP: false,
-  ACCESS_TOKEN: ACCESS_TOKEN,
+const shopify = shopifyApi({
+  apiKey: API_KEY,
+  apiSecretKey: 'APISecretFromPartnersDashboard',
+  scopes: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
+  hostName: 'https://trackingnote-2a56446133b8.herokuapp.com/',  // or your domain name
+  apiVersion: LATEST_API_VERSION,   // use latest API version
+  accessToken: ACCESS_TOKEN,   // your access token if applicable
+  isEmbeddedApp: false,             // set true if using an embedded app
 });
+
 
 // Middleware to parse JSON
 app.use(bodyParser.json());
