@@ -20,6 +20,35 @@ function extractTrackingNumber(note) {
 }
 
 
+async function updateTracking(orderId, trackingNumber) {
+    try {
+        const fulfillmentData = {
+            fulfillment: {
+                tracking_info: {
+                    number: trackingNumber,
+                },
+                notify_customer: true,
+            },
+        };
+
+        const response = await axios.post(
+            `${SHOPIFY_API_URL}/orders/${orderId}/fulfillments.json`,
+            fulfillmentData,
+            {
+                headers: {
+                    "X-Shopify-Access-Token": ACCESS_TOKEN,
+                },
+            }
+        );
+
+        console.log(`Tracking updated for order ${orderId}:`, response.data);
+    } catch (error) {
+        console.error(`Failed to update tracking for order ${orderId}:`, error.response.data);
+    }
+}
+
+
+
 // Webhook endpoint
 app.post('/webhook', async (req, res) => {
     const order = req.body;
@@ -31,6 +60,10 @@ app.post('/webhook', async (req, res) => {
         const trackingNumber = extractTrackingNumber(order.note);
         console.log('Tracking number:', trackingNumber);
         // Update the order with the tracking number
+
+        if (trackingNumber) {
+            await updateTracking(order.id, trackingNumber);
+        }
 
     }
 
