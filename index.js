@@ -53,7 +53,7 @@ app.post('/webhook', async (req, res) => {
         console.log('Building Shopify client for order');
         const client = new shopify.clients.Rest({
             domain: SHOP_DOMAIN,
-            accessToken: ACCESS_TOKEN,
+            accessToken: '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',
         });
 
         try {
