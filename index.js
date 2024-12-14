@@ -31,6 +31,7 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
          console.log(SHOP_DOMAIN);
         console.log(ACCESS_TOKEN);
         console.log(fulfillmentId);
+        console.log(`https://${SHOP_DOMAIN}/admin/api/2024-01/orders/${orderId}/fulfillments/${fulfillmentId}.json`);
         // Update fulfillment status
         const fulfillmentData = {
             fulfillment: {
@@ -46,6 +47,7 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
             fulfillmentData,
             {
                 headers: {
+                      'Content-Type': 'application/json',
                     "X-Shopify-Access-Token": ACCESS_TOKEN,
                 },
             }
