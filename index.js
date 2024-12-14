@@ -30,6 +30,8 @@ app.post('/webhook', async (req, res) => {
     console.log('Tracking Number:', trackingNumber);
     if (trackingNumber) {
       try {
+        // Fetch fulfillment ID
+        console.log(`Fetching fulfillment ID for order ${order.fulfillments[0].id}  ${order.fulfillments.id}`);
         await updateTracking(order.id, trackingNumber, order.fulfillments[0].id);
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
@@ -54,6 +56,10 @@ async function updateTracking(trackingNumber, fulfillmentId) {
     const updateTrackingUrl = `${SHOPIFY_API_URL}/admin/api/2024-10/fulfillments/${fulfillmentId}/update_tracking.json`;
 
     console.log(`Updating tracking for fulfillment ID ${fulfillmentId}`);
+    console.log(`Updating tracking for fulfillment ID ${trackingNumber}`);
+
+
+    // Replace the carrier and tracking number with your desired values
 
     const body = {
       fulfillment: {
