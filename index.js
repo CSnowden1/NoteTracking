@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const API_KEY = process.env.API_KEY;
-const API_KEY_SECRET = process.env.API_SECRET_KEY;
+const API_KEY_SECRET = process.env.API_KEY_SECRET;
 
 // Initialize Shopify API client
 const shopify = shopifyApi({
