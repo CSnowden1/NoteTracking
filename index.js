@@ -28,6 +28,8 @@ async function updateTracking(orderId, trackingNumber, fulfillmentId) {
     }
 
     try {
+         console.log(SHOP_DOMAIN);
+        console.log(ACCESS_TOKEN);
         const fulfillmentData = {
             fulfillment: {
                 tracking_info: {
