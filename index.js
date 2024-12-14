@@ -15,12 +15,12 @@ app.use(bodyParser.json());
 const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const API_KEY = process.env.API_KEY;
-const API_SECRET_KEY = process.env.API_SECRET_KEY;
+const API_KEY_SECRET = process.env.API_SECRET_KEY;
 
 // Initialize Shopify API client
 const shopify = shopifyApi({
     apiKey: API_KEY,
-    apiSecretKey: API_SECRET_KEY,
+    apiSecretKey: API_KEY_SECRET,
     scopes: ['write_fulfillments', 'read_fulfillments'],
     hostName: SHOP_DOMAIN,
 });
