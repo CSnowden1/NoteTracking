@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
-const express = require('express');
-const bodyParser = require('body-parser');
+import express from 'express';
+import bodyParser from 'body-parser';
 import '@shopify/shopify-api/adapters/node';
 import { shopifyApi } from '@shopify/shopify-api';
 
