@@ -11,12 +11,12 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Shopify credentials
-const SHOPIFY_API_URL = 'www.wholesalerelite.com'; // e.g., https://your-store.myshopify.com/admin/api/2023-10
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // e.g., https://your-store.myshopify.com/admin/api/2023-10
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
-const SHOPIFY_WEBHOOK_SECRET = '5ef33f4a6636d1bd7441bf230aa4d1a0';
+const SHOPIFY_WEBHOOK_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
 
 // Verify Shopify webhook
-function verifyWebhook(req, res, next) {
+function verifyWebhook(req, res, next) {  
     const hmac = req.headers['x-shopify-hmac-sha256'];
     const body = JSON.stringify(req.body);
     const hash = crypto.createHmac('sha256', SHOPIFY_WEBHOOK_SECRET).update(body, 'utf8').digest('base64');
@@ -48,11 +48,11 @@ async function updateTracking(orderId, trackingNumber) {
         };
 
         const response = await axios.post(
-            `www.wholesalerelite.com/orders/${orderId}/fulfillments.json`,
+            `${SHOPIFY_API_URL}/orders/${orderId}/fulfillments.json`,
             fulfillmentData,
             {
                 headers: {
-                    "X-Shopify-Access-Token": ,
+                    "X-Shopify-Access-Token": ACCESS_TOKEN,
                 },
             }
         );
