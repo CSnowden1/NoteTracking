@@ -3,7 +3,7 @@ dotenv.config();
 import express from 'express';
 import bodyParser from 'body-parser';
 import '@shopify/shopify-api/adapters/node';
-import { shopifyApi, Session } from '@shopify/shopify-api';
+import { shopifyApi, Session, restResources } from '@shopify/shopify-api';
 
 
 const app = express();
@@ -24,6 +24,7 @@ const shopify = shopifyApi({
     apiSecretKey: API_KEY_SECRET,
     scopes: ['write_customers, read_customers, write_fulfillments, read_fulfillments, write_order_edits, read_order_edits, read_orders, write_orders'],
     hostName: SHOP_DOMAIN,
+    restResources
 });
 
 
