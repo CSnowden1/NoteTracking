@@ -69,7 +69,7 @@ async function updateTracking(fulfillmentId, trackingNumber) {
   `;
 
   const curlCommand = `
-    curl -X POST \\
+    curl -s -X POST \\
       ${SHOPIFY_API_URL}/admin/api/2024-10/graphql.json \\
       -H "Content-Type: application/json" \\
       -H "X-Shopify-Access-Token: ${ACCESS_TOKEN}" \\
