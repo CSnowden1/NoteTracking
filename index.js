@@ -78,12 +78,16 @@ async function updateTracking(fulfillmentId, trackingNumber) {
       -H "Content-Type: application/json" \\
       -H "X-Shopify-Access-Token: ${ACCESS_TOKEN}" \\
       -d '{
-            "query": "mutation FulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfoInput: FulfillmentTrackingInput!, $notifyCustomer: Boolean) { fulfillmentTrackingInfoUpdate(fulfillmentId: $fulfillmentId, trackingInfoInput: $trackingInfoInput, notifyCustomer: $notifyCustomer) { fulfillment { id status trackingInfo { number} } userErrors { field message } } }",
-            "variables": {
-                "fulfillmentId": "${fulfillmentId}",
-                "notifyCustomer": true,
-                "trackingInfoInput": {
-                "number": "${trackingNumber}"
+            "query": "mutation FulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfoInput: FulfillmentTrackingInput!) { 
+                fulfillmentTrackingInfoUpdate(fulfillmentId: $fulfillmentId, trackingInfoInput: $trackingInfoInput) { 
+                    fulfillment { id status trackingInfo { number } } 
+                    userErrors { field message } 
+                } 
+            }",
+                "variables": {
+                    "fulfillmentId": "${fulfillmentId}",
+                    "trackingInfoInput": {
+                    "number": "${trackingNumber}"
                 }
             }
         }'
