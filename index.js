@@ -25,10 +25,7 @@ app.post('/webhook', async (req, res) => {
   console.log('Received webhook:', order);
 
 setTimeout(async () => {
-        console.log("Letting everything settle")
-      }, 20000)
-
-  if (order && order.note) {
+if (order && order.note) {
     const trackingNumber = extractTrackingNumber(order.note);
     console.log('Tracking Number:', trackingNumber);
     if (trackingNumber) {
@@ -47,6 +44,9 @@ setTimeout(async () => {
   } else {
     console.log(`Invalid order data received`);
   }
+      }, 20000)
+
+  
 
   res.status(200).send('Webhook processed');
 });
@@ -66,7 +66,7 @@ async function updateTracking(fulfillmentId, trackingNumber) {
         "notifyCustomer": true,
         "trackingInfoInput": {
           "company": "DHL Express",
-          "number": "1288715540"
+          "number": ${trackingNumber}
         }
       }
     }
@@ -77,8 +77,17 @@ async function updateTracking(fulfillmentId, trackingNumber) {
       ${SHOPIFY_API_URL}/admin/api/2024-10/graphql.json \\
       -H "Content-Type: application/json" \\
       -H "X-Shopify-Access-Token: ${ACCESS_TOKEN}" \\
-      -d '${graphqlQuery.replace(/(\r\n|\n|\r)/gm, "")}'
-  `;
+      -d '{
+            "query": "mutation FulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfoInput: FulfillmentTrackingInput!, $notifyCustomer: Boolean) { fulfillmentTrackingInfoUpdate(fulfillmentId: $fulfillmentId, trackingInfoInput: $trackingInfoInput, notifyCustomer: $notifyCustomer) { fulfillment { id status trackingInfo { number} } userErrors { field message } } }",
+            "variables": {
+                "fulfillmentId": "${fulfillmentId}",
+                "notifyCustomer": true,
+                "trackingInfoInput": {
+                "number": "${trackingNumber}"
+                }
+            }
+        }'
+    `;
 
   console.log(`Executing curl command: ${curlCommand}`);
 
