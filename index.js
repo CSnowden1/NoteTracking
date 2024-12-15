@@ -81,8 +81,8 @@ async function updateTracking(fulfillmentId, trackingNumber, notifyCustomer = fa
         fulfillmentId: `gid://shopify/Fulfillment/${fulfillmentId}`,
         trackingInfoInput: {
           number: trackingNumber,
-          company: "DHL Express", // Replace with the actual carrier
-          url: `https://www.dhl.com/global-en/home/tracking/tracking-express.html?AWB=${trackingNumber}`, // Example URL
+          company: "DHL Express",
+          url: `https://www.dhl.com/global-en/home/tracking/tracking-express.html?AWB=${trackingNumber}`,
         },
         notifyCustomer: notifyCustomer,
       },
@@ -102,11 +102,8 @@ async function updateTracking(fulfillmentId, trackingNumber, notifyCustomer = fa
     const data = response.data;
 
     if (data.errors || data.data.fulfillmentTrackingInfoUpdate.userErrors.length) {
-      throw new Error(
-        `GraphQL errors: ${JSON.stringify(
-          data.errors || data.data.fulfillmentTrackingInfoUpdate.userErrors
-        )}`
-      );
+      console.error("GraphQL Errors:", data.errors || data.data.fulfillmentTrackingInfoUpdate.userErrors);
+      throw new Error("Tracking information update failed.");
     }
 
     console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentId}`);
