@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // Your shop's base URL
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // Your shop's base URL, for example: "https://your-shop-name.myshopify.com"
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // The OAuth access token
 
 // Middleware to parse JSON
@@ -30,9 +30,11 @@ app.post('/webhook', async (req, res) => {
     if (trackingNumber) {
       try {
         // Update tracking using GraphQL
-        const fulfillmentId = order.fulfillments[0].admin_graphql_api_id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
+        const fulfillmentIdUrl = order.fulfillments[0].admin_graphql_api_id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
+        const fulfillmentId = order.fulfillments[0].id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
         console.log(`Updating tracking for fulfillment ${fulfillmentId}`);
-        await updateTracking(fulfillmentId, trackingNumber, order.fulfillments[0].id);
+        console.log(`Using GraphQL Url ${fulfillmentId}`);
+        await updateTracking(fulfillmentId, trackingNumber, fulfillmentIdUrl);
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
         console.error(`Failed to update tracking for order ${order.id}:`, error.message);
@@ -48,7 +50,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 // Function to update tracking using Shopify's GraphQL API
-async function updateTracking(fulfillmentId, trackingNumber, fulfillmentId) {
+async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
   console.log(`Updating tracking for fulfillment ${fulfillmentId}`);
   try {
     const graphqlQuery = {
@@ -80,18 +82,17 @@ async function updateTracking(fulfillmentId, trackingNumber, fulfillmentId) {
         }
       `,
       "variables": {
-        "fulfillmentId": `gid://shopify/Fulfillment/${fulfillmentId}`,
+        "fulfillmentId": `${fillURL}`,
         "notifyCustomer": true,
         "trackingInfoInput": {
           "number": trackingNumber,
-          "company": "DHL", // Example carrier. Replace this with actual carrier if necessary.
           "url": `https://www.dhl.com/global-en/home/tracking/tracking-express.html?AWB=${trackingNumber}`,
         },
       },
     };
 
     const response = await axios.post(
-      `${SHOPIFY_API_URL}/admin/api/2024-10/graphql.json`,
+      `${SHOPIFY_API_URL}/admin/api/2024-10/graphql.json`,  // Correct API URL
       graphqlQuery,
       {
         headers: {
