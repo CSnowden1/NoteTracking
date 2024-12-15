@@ -77,18 +77,13 @@ async function updateTracking(fulfillmentId, trackingNumber, notifyCustomer = fa
           }
         }
       `,
-      variables: {
-        fulfillmentId: `gid://shopify/Fulfillment/${fulfillmentId}`,
+      "variables": {
+        "fulfillmentId": `gid://shopify/Fulfillment/${fulfillmentId}`,
         "notifyCustomer": true,
-        trackingInfoInput: {
-          company: 'DHL Express',
-          number: trackingNumber,
+        "trackingInfoInput": {
+           "company": "custom",
+          "number": `${trackingNumber}`,
         },
-      },
-    };
-          number: trackingNumber,
-        },
-        notifyCustomer: notifyCustomer,
       },
     };
 
