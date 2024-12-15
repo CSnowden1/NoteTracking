@@ -33,7 +33,7 @@ app.post('/webhook', async (req, res) => {
         const fulfillmentIdUrl = order.fulfillments[0].admin_graphql_api_id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
         const fulfillmentId = order.fulfillments[0].id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
         console.log(`Updating tracking for fulfillment ${fulfillmentId}`);
-        console.log(`Using GraphQL Url ${fulfillmentId}`);
+        console.log(`Using GraphQL Url ${fulfillmentIdUrl}`);
         await updateTracking(fulfillmentId, trackingNumber, fulfillmentIdUrl);
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
@@ -52,6 +52,7 @@ app.post('/webhook', async (req, res) => {
 // Function to update tracking using Shopify's GraphQL API
 async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
   console.log(`Updating tracking for fulfillment ${fulfillmentId}`);
+  console.log(`Using GraphQL Url ${fillURL}`);
   try {
     const graphqlQuery = {
       query: `
@@ -86,10 +87,11 @@ async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
         "notifyCustomer": true,
         "trackingInfoInput": {
           "number": trackingNumber,
-          "url": `https://www.dhl.com/global-en/home/tracking/tracking-express.html?AWB=${trackingNumber}`,
         },
       },
     };
+
+    console.log(graphqlQuery);
 
     const response = await axios.post(
       `${SHOPIFY_API_URL}/admin/api/2024-10/graphql.json`,  // Correct API URL
