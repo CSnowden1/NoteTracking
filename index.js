@@ -51,13 +51,10 @@ async function updateTracking(fulfillmentId, trackingNumber) {
   try {
     const graphqlQuery = {
       query: `
-        mutation {
+        mutation fulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfo: FulfillmentTrackingInfoInput!) {
           fulfillmentTrackingInfoUpdateV2(
-            id: "gid://shopify/Fulfillment/${fulfillmentId}",
-            trackingInfo: {
-              number: "${trackingNumber}",
-              company: "UPS"
-            }
+            fulfillmentId: $fulfillmentId,
+            trackingInfoInput: $trackingInfo
           ) {
             fulfillment {
               id
@@ -69,6 +66,13 @@ async function updateTracking(fulfillmentId, trackingNumber) {
           }
         }
       `,
+      variables: {
+        fulfillmentId: `gid://shopify/Fulfillment/${fulfillmentId}`,
+        trackingInfo: {
+          number: trackingNumber,
+          company: "UPS", // Replace with the actual carrier name
+        },
+      },
     };
 
     const response = await axios.post(
@@ -98,6 +102,7 @@ async function updateTracking(fulfillmentId, trackingNumber) {
     throw error;
   }
 }
+
 
 // Start the server
 app.listen(PORT, () => {
