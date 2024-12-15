@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 
 // Function to extract tracking number from notes
 function extractTrackingNumber(note) {
-  const match = note.match(/Tracking Number:\s*(\d+)/i);
+  const match = note.match(/Tracking Number:\s*(\S+)/i);  // Adjusted regex to capture any non-whitespace characters
   return match ? match[1] : null;
 }
 
@@ -30,8 +30,9 @@ app.post('/webhook', async (req, res) => {
     if (trackingNumber) {
       try {
         // Update tracking using GraphQL
-        console.log(`Updating tracking for fulfillment ${order.fulfillments[0].id}`);
-        await updateTracking( order.fulfillments[0].admin_graphql_api_id, trackingNumber, order.fulfillments[0].id );
+        const fulfillmentId = order.fulfillments[0].admin_graphql_api_id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
+        console.log(`Updating tracking for fulfillment ${fulfillmentId}`);
+        await updateTracking(fulfillmentId, trackingNumber, order.fulfillments[0].id);
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
         console.error(`Failed to update tracking for order ${order.id}:`, error.message);
@@ -47,8 +48,8 @@ app.post('/webhook', async (req, res) => {
 });
 
 // Function to update tracking using Shopify's GraphQL API
-async function updateTracking(fulfillmentURL, trackingNumber, fulfillmentIde) {
-console.log(`Updating tracking for fulfillment ${fulfillmentURL}`);
+async function updateTracking(fulfillmentId, trackingNumber, fulfillmentId) {
+  console.log(`Updating tracking for fulfillment ${fulfillmentId}`);
   try {
     const graphqlQuery = {
       query: `
@@ -79,10 +80,12 @@ console.log(`Updating tracking for fulfillment ${fulfillmentURL}`);
         }
       `,
       "variables": {
-        "fulfillmentId": `${fulfillmentIde}`,
+        "fulfillmentId": `gid://shopify/Fulfillment/${fulfillmentId}`,
         "notifyCustomer": true,
         "trackingInfoInput": {
-          "number": `${trackingNumber}`,
+          "number": trackingNumber,
+          "company": "DHL", // Example carrier. Replace this with actual carrier if necessary.
+          "url": `https://www.dhl.com/global-en/home/tracking/tracking-express.html?AWB=${trackingNumber}`,
         },
       },
     };
@@ -105,14 +108,13 @@ console.log(`Updating tracking for fulfillment ${fulfillmentURL}`);
       throw new Error("Tracking information update failed.");
     }
 
-    console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentIde}`);
+    console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentId}`);
     return data.data.fulfillmentTrackingInfoUpdate.fulfillment;
   } catch (error) {
     console.error(`Error updating tracking: ${error.message}`);
     throw error;
   }
 }
-
 
 // Start the server
 app.listen(PORT, () => {
