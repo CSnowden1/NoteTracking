@@ -87,7 +87,6 @@ async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
         "notifyCustomer": true,
         "trackingInfoInput": {
           "company": "DHL Express",
-          "url": null,
           "number": trackingNumber,
         },
       },
