@@ -24,6 +24,10 @@ app.post('/webhook', async (req, res) => {
   const order = req.body;
   console.log('Received webhook:', order);
 
+setTimeout(async () => {
+        console.log("Letting everything settle")
+      }, 20000)
+
   if (order && order.note) {
     const trackingNumber = extractTrackingNumber(order.note);
     console.log('Tracking Number:', trackingNumber);
