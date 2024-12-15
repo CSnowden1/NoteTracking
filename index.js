@@ -7,9 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL;  // Your shop's base URL
-const ACCESS_TOKEN = process.env.ACCESS_TOKEN;  // The OAuth access token
-const SHOP_DOMAIN = process.env.SHOP_DOMAIN;  // Your shop's domain
+const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // Your shop's base URL
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // The OAuth access token
 
 // Middleware to parse JSON
 app.use(bodyParser.json());
@@ -23,16 +22,16 @@ function extractTrackingNumber(note) {
 // Webhook endpoint to trigger the tracking update
 app.post('/webhook', async (req, res) => {
   const order = req.body;
-    console.log('Received webhook:', order);
+  console.log('Received webhook:', order);
 
   if (order && order.note) {
     const trackingNumber = extractTrackingNumber(order.note);
     console.log('Tracking Number:', trackingNumber);
     if (trackingNumber) {
       try {
-        // Fetch fulfillment ID
-        console.log(`Fetching fulfillment ID for order ${order.fulfillments[0].id}`);
-        await updateTracking(trackingNumber, order.fulfillments[0].id);
+        // Update tracking using GraphQL
+        console.log(`Updating tracking for fulfillment ${order.fulfillments[0].id}`);
+        await updateTracking(order.fulfillments[0].id, trackingNumber);
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
         console.error(`Failed to update tracking for order ${order.id}:`, error.message);
@@ -47,41 +46,56 @@ app.post('/webhook', async (req, res) => {
   res.status(200).send('Webhook processed');
 });
 
-// Function to fetch fulfillment ID and update the tracking number in Shopify
-async function updateTracking(trackingNumber, fulfillmentId) {
+// Function to update tracking using Shopify's GraphQL API
+async function updateTracking(fulfillmentId, trackingNumber) {
   try {
- 
-  console.log(`Fulfillment ID: ${fulfillmentId}`);
-    // Update tracking
-    const updateTrackingUrl = `${SHOPIFY_API_URL}/admin/api/2024-10/fulfillments/${fulfillmentId}/update_tracking.json`;
-
-    console.log(`Updating tracking for fulfillment ID ${fulfillmentId} with ${trackingNumber}`);
-
-
-    // Replace the carrier and tracking number with your desired values
-
-    const body = {
-      "fulfillment": {
-        "notify_customer": true,
-        "tracking_info": {
-          "company": 'DHL Express', // Replace with the actual carrier if needed
-          "number": '12345678',
-        },
-      },
+    const graphqlQuery = {
+      query: `
+        mutation {
+          fulfillmentTrackingInfoUpdateV2(
+            id: "gid://shopify/Fulfillment/${fulfillmentId}",
+            trackingInfo: {
+              number: "${trackingNumber}",
+              company: "UPS"
+            }
+          ) {
+            fulfillment {
+              id
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `,
     };
 
+    const response = await axios.post(
+      `${SHOPIFY_API_URL}/admin/api/2024-10/graphql.json`,
+      graphqlQuery,
+      {
+        headers: {
+          'X-Shopify-Access-Token': ACCESS_TOKEN,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    const response = await axios.post(updateTrackingUrl, body, {
-      headers: {
-        'X-Shopify-Access-Token': ACCESS_TOKEN,
-        'Content-Type': 'application/json',
-      },
-    });
+    const data = response.data;
+    if (data.errors || data.data.fulfillmentTrackingInfoUpdateV2.userErrors.length) {
+      throw new Error(
+        `GraphQL errors: ${JSON.stringify(
+          data.errors || data.data.fulfillmentTrackingInfoUpdateV2.userErrors
+        )}`
+      );
+    }
 
     console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentId}`);
-    return response.data;
+    return data.data.fulfillmentTrackingInfoUpdateV2.fulfillment;
   } catch (error) {
-    throw new Error(`Error updating tracking: ${error.message}`);
+    console.error(`Error updating tracking: ${error.message}`);
+    throw error;
   }
 }
 
