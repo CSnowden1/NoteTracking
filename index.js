@@ -83,7 +83,7 @@ async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
         }
       `,
       "variables": {
-        "fulfillmentId": `${fulfillmentId}`,
+        "fulfillmentId": `${fillURL}`,
         "notifyCustomer": true,
         "trackingInfoInput": {
           "company": "DHL Express",
@@ -96,7 +96,7 @@ async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
     console.log(graphqlQuery);
 
     const response = await axios.post(
-      `${fillURL}`,  // Correct API URL
+      `https://fingrid.myshopify.com/admin/api/2024-10/graphql.json`,  // Correct API URL
       graphqlQuery,
       {
         headers: {
