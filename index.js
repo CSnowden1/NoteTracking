@@ -60,7 +60,7 @@ async function updateTracking(fulfillmentId, trackingNumber) {
       "variables": {
         "fulfillmentId": "${fulfillmentId}",
         "notifyCustomer": true,
-        "trackingInfoInput": {
+        "trackingInfo": {
           "number": "${trackingNumber}"
         }
       }
