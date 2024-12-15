@@ -58,7 +58,7 @@ async function updateTracking(fulfillmentId, trackingNumber) {
         } 
       }",
       "variables": {
-        "fulfillmentId": "gid://shopify/Fulfillment/${fulfillmentId}",
+        "fulfillmentId": "${fulfillmentId}",
         "notifyCustomer": true,
         "trackingInfoInput": {
           "company": "UPS",
