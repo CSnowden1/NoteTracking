@@ -51,10 +51,10 @@ async function updateTracking(fulfillmentId, trackingNumber) {
   try {
     const graphqlQuery = {
       query: `
-        mutation fulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfo: FulfillmentTrackingInput!) {
+        mutation fulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfoInput: FulfillmentTrackingInfoInput!) {
           fulfillmentTrackingInfoUpdateV2(
             fulfillmentId: $fulfillmentId,
-            trackingInfoInput: $trackingInfo
+            trackingInfoInput: $trackingInfoInput
           ) {
             fulfillment {
               id
@@ -68,9 +68,10 @@ async function updateTracking(fulfillmentId, trackingNumber) {
       `,
       variables: {
         fulfillmentId: `gid://shopify/Fulfillment/${fulfillmentId}`,
-        trackingInfo: {
+        trackingInfoInput: {
           number: trackingNumber,
-          company: "UPS", // Replace with the actual carrier
+          company: "DHL Express",
+          url: `https://www.dhl.com/en/express/tracking.html?AWB=${trackingNumber}`,
         },
       },
     };
@@ -88,12 +89,9 @@ async function updateTracking(fulfillmentId, trackingNumber) {
 
     const data = response.data;
 
-    if (data.errors || data.data.fulfillmentTrackingInfoUpdateV2.userErrors.length) {
-      throw new Error(
-        `GraphQL errors: ${JSON.stringify(
-          data.errors || data.data.fulfillmentTrackingInfoUpdateV2.userErrors
-        )}`
-      );
+    if (data.errors || (data.data.fulfillmentTrackingInfoUpdateV2 && data.data.fulfillmentTrackingInfoUpdateV2.userErrors.length)) {
+      console.error(`GraphQL errors: ${JSON.stringify(data.errors || data.data.fulfillmentTrackingInfoUpdateV2.userErrors)}`);
+      return null;
     }
 
     console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentId}`);
@@ -103,6 +101,7 @@ async function updateTracking(fulfillmentId, trackingNumber) {
     throw error;
   }
 }
+
 
 // Start the server
 app.listen(PORT, () => {
