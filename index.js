@@ -31,7 +31,7 @@ app.post('/webhook', async (req, res) => {
       try {
         // Update tracking using GraphQL
         console.log(`Updating tracking for fulfillment ${order.fulfillments[0].id}`);
-        await updateTracking(order.fulfillments[0], order.fulfillments[0].admin_graphql_api_id, trackingNumber, order.fulfillments[0].id );
+        await updateTracking( order.fulfillments[0].admin_graphql_api_id, trackingNumber, order.fulfillments[0].id );
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
         console.error(`Failed to update tracking for order ${order.id}:`, error.message);
@@ -105,7 +105,7 @@ console.log(`Updating tracking for fulfillment ${fulfillmentURL}`);
       throw new Error("Tracking information update failed.");
     }
 
-    console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentId}`);
+    console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentIde}`);
     return data.data.fulfillmentTrackingInfoUpdate.fulfillment;
   } catch (error) {
     console.error(`Error updating tracking: ${error.message}`);
