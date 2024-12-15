@@ -83,9 +83,11 @@ async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
         }
       `,
       "variables": {
-        "fulfillmentId": `${fillURL}`,
+        "fulfillmentId": `${fulfillmentId}`,
         "notifyCustomer": true,
         "trackingInfoInput": {
+          "company": "DHL Express",
+          "url": null,
           "number": trackingNumber,
         },
       },
@@ -94,7 +96,7 @@ async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
     console.log(graphqlQuery);
 
     const response = await axios.post(
-      `${SHOPIFY_API_URL}/admin/api/2024-10/graphql.json`,  // Correct API URL
+      `${fillURL}`,  // Correct API URL
       graphqlQuery,
       {
         headers: {
