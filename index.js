@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const axios = require('axios');
+const { exec } = require('child_process'); // Used to execute shell commands (like curl)
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,10 +31,8 @@ app.post('/webhook', async (req, res) => {
       try {
         // Update tracking using GraphQL
         const fulfillmentIdUrl = order.fulfillments[0].admin_graphql_api_id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
-        const fulfillmentId = order.fulfillments[0].id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
-        console.log(`Updating tracking for fulfillment ${fulfillmentId}`);
-        console.log(`Using GraphQL Url ${fulfillmentIdUrl}`);
-        await updateTracking(fulfillmentId, trackingNumber, fulfillmentIdUrl);
+        console.log(`Updating tracking for fulfillment ${fulfillmentIdUrl}`);
+        await updateTracking(fulfillmentIdUrl, trackingNumber);
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
         console.error(`Failed to update tracking for order ${order.id}:`, error.message);
@@ -49,75 +47,49 @@ app.post('/webhook', async (req, res) => {
   res.status(200).send('Webhook processed');
 });
 
-// Function to update tracking using Shopify's GraphQL API
-async function updateTracking(fulfillmentId, trackingNumber, fillURL) {
-  console.log(`Updating tracking for fulfillment ${fulfillmentId}`);
-  console.log(`Using GraphQL Url ${fillURL}`);
-  try {
-    const graphqlQuery = {
-      query: `
-        mutation FulfillmentTrackingInfoUpdate(
-          $fulfillmentId: ID!,
-          $trackingInfoInput: FulfillmentTrackingInput!,
-          $notifyCustomer: Boolean
-        ) {
-          fulfillmentTrackingInfoUpdate(
-            fulfillmentId: $fulfillmentId,
-            trackingInfoInput: $trackingInfoInput,
-            notifyCustomer: $notifyCustomer
-          ) {
-            fulfillment {
-              id
-              status
-              trackingInfo {
-                company
-                number
-                url
-              }
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `,
+// Function to update tracking using Shopify's GraphQL API via curl
+async function updateTracking(fulfillmentId, trackingNumber) {
+  const graphqlQuery = `
+    {
+      "query": "mutation FulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfoInput: FulfillmentTrackingInput!, $notifyCustomer: Boolean) { 
+        fulfillmentTrackingInfoUpdate(fulfillmentId: $fulfillmentId, trackingInfoInput: $trackingInfoInput, notifyCustomer: $notifyCustomer) { 
+          fulfillment { id status trackingInfo { company number url } } 
+          userErrors { field message } 
+        } 
+      }",
       "variables": {
-        "fulfillmentId": `${fillURL}`,
+        "fulfillmentId": "gid://shopify/Fulfillment/${fulfillmentId}",
         "notifyCustomer": true,
         "trackingInfoInput": {
-          "company": "DHL Express",
-          "number": trackingNumber,
-        },
-      },
-    };
-
-    console.log(graphqlQuery);
-
-    const response = await axios.post(
-      `https://fingrid.myshopify.com/admin/api/2024-10/graphql.json`,  // Correct API URL
-      graphqlQuery,
-      {
-        headers: {
-          'X-Shopify-Access-Token': ACCESS_TOKEN,
-          'Content-Type': 'application/json',
-        },
+          "company": "UPS",
+          "number": "${trackingNumber}"
+        }
       }
-    );
-
-    const data = response.data;
-
-    if (data.errors || data.data.fulfillmentTrackingInfoUpdate.userErrors.length) {
-      console.error("GraphQL Errors:", data.errors || data.data.fulfillmentTrackingInfoUpdate.userErrors);
-      throw new Error("Tracking information update failed.");
     }
+  `;
 
-    console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentId}`);
-    return data.data.fulfillmentTrackingInfoUpdate.fulfillment;
-  } catch (error) {
-    console.error(`Error updating tracking: ${error.message}`);
-    throw error;
-  }
+  const curlCommand = `
+    curl -X POST \\
+      ${SHOPIFY_API_URL}/admin/api/2024-10/graphql.json \\
+      -H "Content-Type: application/json" \\
+      -H "X-Shopify-Access-Token: ${ACCESS_TOKEN}" \\
+      -d '${graphqlQuery.replace(/(\r\n|\n|\r)/gm, "")}'
+  `;
+
+  console.log(`Executing curl command: ${curlCommand}`);
+
+  // Execute curl command to make the GraphQL request
+  exec(curlCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error executing curl command: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`stderr: ${stderr}`);
+      return;
+    }
+    console.log(`Response from Shopify API: ${stdout}`);
+  });
 }
 
 // Start the server
