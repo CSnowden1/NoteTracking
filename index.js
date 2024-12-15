@@ -47,17 +47,28 @@ app.post('/webhook', async (req, res) => {
 });
 
 // Function to update tracking using Shopify's GraphQL API
-async function updateTracking(fulfillmentId, trackingNumber) {
+async function updateTracking(fulfillmentId, trackingNumber, notifyCustomer = false) {
   try {
     const graphqlQuery = {
       query: `
-        mutation fulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfoInput: FulfillmentTrackingInfoInput!) {
-          fulfillmentTrackingInfoUpdateV2(
+        mutation FulfillmentTrackingInfoUpdate(
+          $fulfillmentId: ID!,
+          $trackingInfoInput: FulfillmentTrackingInput!,
+          $notifyCustomer: Boolean
+        ) {
+          fulfillmentTrackingInfoUpdate(
             fulfillmentId: $fulfillmentId,
-            trackingInfoInput: $trackingInfoInput
+            trackingInfoInput: $trackingInfoInput,
+            notifyCustomer: $notifyCustomer
           ) {
             fulfillment {
               id
+              status
+              trackingInfo {
+                company
+                number
+                url
+              }
             }
             userErrors {
               field
@@ -70,9 +81,10 @@ async function updateTracking(fulfillmentId, trackingNumber) {
         fulfillmentId: `gid://shopify/Fulfillment/${fulfillmentId}`,
         trackingInfoInput: {
           number: trackingNumber,
-          company: "DHL Express",
-          url: `https://www.dhl.com/en/express/tracking.html?AWB=${trackingNumber}`,
+          company: "DHL Express", // Replace with the actual carrier
+          url: `https://www.dhl.com/global-en/home/tracking/tracking-express.html?AWB=${trackingNumber}`, // Example URL
         },
+        notifyCustomer: notifyCustomer,
       },
     };
 
@@ -89,13 +101,16 @@ async function updateTracking(fulfillmentId, trackingNumber) {
 
     const data = response.data;
 
-    if (data.errors || (data.data.fulfillmentTrackingInfoUpdateV2 && data.data.fulfillmentTrackingInfoUpdateV2.userErrors.length)) {
-      console.error(`GraphQL errors: ${JSON.stringify(data.errors || data.data.fulfillmentTrackingInfoUpdateV2.userErrors)}`);
-      return null;
+    if (data.errors || data.data.fulfillmentTrackingInfoUpdate.userErrors.length) {
+      throw new Error(
+        `GraphQL errors: ${JSON.stringify(
+          data.errors || data.data.fulfillmentTrackingInfoUpdate.userErrors
+        )}`
+      );
     }
 
     console.log(`Tracking updated successfully for fulfillment ID ${fulfillmentId}`);
-    return data.data.fulfillmentTrackingInfoUpdateV2.fulfillment;
+    return data.data.fulfillmentTrackingInfoUpdate.fulfillment;
   } catch (error) {
     console.error(`Error updating tracking: ${error.message}`);
     throw error;
