@@ -31,7 +31,7 @@ app.post('/webhook', async (req, res) => {
       try {
         // Update tracking using GraphQL
         console.log(`Updating tracking for fulfillment ${order.fulfillments[0].id}`);
-        await updateTracking(order.fulfillments[0]. admin_graphql_api_id, trackingNumber);
+        await updateTracking(order.fulfillments[0], admin_graphql_api_id, trackingNumber, order.fulfillments[0].id );
         console.log(`Tracking updated for order ${order.id}`);
       } catch (error) {
         console.error(`Failed to update tracking for order ${order.id}:`, error.message);
@@ -47,7 +47,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 // Function to update tracking using Shopify's GraphQL API
-async function updateTracking(fulfillmentURL, trackingNumber) {
+async function updateTracking(fulfillmentURL, trackingNumber, fulfillmentIde) {
 console.log(`Updating tracking for fulfillment ${fulfillmentURL}`);
   try {
     const graphqlQuery = {
@@ -79,7 +79,7 @@ console.log(`Updating tracking for fulfillment ${fulfillmentURL}`);
         }
       `,
       "variables": {
-        "fulfillmentId": `${fulfillmentURL}`,
+        "fulfillmentId": `${fulfillmentIde}`,
         "notifyCustomer": true,
         "trackingInfoInput": {
           "number": `${trackingNumber}`,
