@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Shopify credentials
-const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // Your shop's base URL, for example: "https://your-shop-name.myshopify.com"
+// const SHOPIFY_API_URL = process.env.SHOPIFY_API_URL; // Your shop's base URL, for example: "https://your-shop-name.myshopify.com"
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN; // The OAuth access token
 
 // Middleware to parse JSON
@@ -56,7 +56,7 @@ app.post('/webhook', async (req, res) => {
     console.log(`Order ${order?.id} already processed or invalid data received.`);
   }
 });
-  
+    
 // Function to update tracking using Shopify's GraphQL API via curl
 async function updateTracking(fulfillmentId, trackingNumber) {
   const curlCommand = `
