@@ -35,6 +35,10 @@ if (order && order.note) {
         console.log(`Tracking updated for order ${order.id}`);
         return;
       } 
+    } else {
+      console.log(`No tracking number found in note for order ${order.id}`);
+    }  
+    return;
   }
       
 
