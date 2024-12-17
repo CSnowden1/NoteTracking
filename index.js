@@ -81,7 +81,7 @@ async function updateTracking(fulfillmentId, trackingNumber) {
             "query": "mutation FulfillmentTrackingInfoUpdate($fulfillmentId: ID!, $trackingInfoInput: FulfillmentTrackingInput!, $notifyCustomer: Boolean) { fulfillmentTrackingInfoUpdate(fulfillmentId: $fulfillmentId, trackingInfoInput: $trackingInfoInput, notifyCustomer: $notifyCustomer) { fulfillment { id status trackingInfo { company number url } } userErrors { field message } } }",
             "variables": {
                 "fulfillmentId": "${fulfillmentId}",
-                "notifyCustomer": true,
+                "notifyCustomer": false,
                 "trackingInfoInput": {
                 "company": "DHL Express",
                 "number": "${trackingNumber}"
