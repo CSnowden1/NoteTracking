@@ -33,10 +33,7 @@ if (order && order.note) {
         console.log(`Updating tracking for fulfillment ${fulfillmentIdUrl}`);
         await updateTracking(fulfillmentIdUrl, trackingNumber);
         console.log(`Tracking updated for order ${order.id}`);
-      }
-    } else {
-      console.log(`No tracking number found in note for order ${order.id}`);
-    } 
+      } 
   }
       
 
