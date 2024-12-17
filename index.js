@@ -37,11 +37,7 @@ if (order && order.note) {
       } 
       return;
   }
-      
-
-  
-
-  res.status(200).send('Webhook processed');
+  return;
 });
 
 // Function to update tracking using Shopify's GraphQL API via curl
