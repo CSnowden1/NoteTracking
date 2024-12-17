@@ -24,7 +24,7 @@ app.post('/webhook', async (req, res) => {
   const order = req.body;
   console.log('Received webhook:', order);
 
-setTimeout(async () => {
+
 if (order && order.note) {
     const trackingNumber = extractTrackingNumber(order.note);
     console.log('Tracking Number:', trackingNumber);
@@ -44,7 +44,7 @@ if (order && order.note) {
   } else {
     console.log(`Invalid order data received`);
   }
-      }, 20000)
+      
 
   
 
