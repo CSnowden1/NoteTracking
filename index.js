@@ -71,7 +71,8 @@ async function updateTracking(fulfillmentId, trackingNumber) {
                 "notifyCustomer": true,
                 "trackingInfoInput": {
                   "company": "DHL Express",
-                  "number": "${trackingNumber}"
+                  "number": "${trackingNumber}",
+                  "url": "www.website.com/tracking-page",
                 }
             }
         }'
