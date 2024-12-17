@@ -56,7 +56,7 @@ app.post('/webhook', async (req, res) => {
     console.log(`Order ${order?.id} already processed or invalid data received.`);
   }
 });
-
+  
 // Function to update tracking using Shopify's GraphQL API via curl
 async function updateTracking(fulfillmentId, trackingNumber) {
   const curlCommand = `
