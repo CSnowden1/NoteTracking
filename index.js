@@ -29,20 +29,11 @@ if (order && order.note) {
     const trackingNumber = extractTrackingNumber(order.note);
     console.log('Tracking Number:', trackingNumber);
     if (trackingNumber) {
-      try {
-        // Update tracking using GraphQL
         const fulfillmentIdUrl = order.fulfillments[0].admin_graphql_api_id;  // Use admin_graphql_api_id to ensure proper GraphQL ID
         console.log(`Updating tracking for fulfillment ${fulfillmentIdUrl}`);
         await updateTracking(fulfillmentIdUrl, trackingNumber);
         console.log(`Tracking updated for order ${order.id}`);
-      } catch (error) {
-        console.error(`Failed to update tracking for order ${order.id}:`, error.message);
-      }
-    } else {
-      console.log(`No tracking number found in note for order ${order.id}`);
-    }
-  } else {
-    console.log(`Invalid order data received`);
+      } 
   }
       
 
